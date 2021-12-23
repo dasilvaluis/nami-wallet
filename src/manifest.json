@@ -25,6 +25,6 @@
     "internalPopup.html",
     "Trezor/*"
   ],
-  "permissions": ["storage", "chrome://favicon/", "unlimitedStorage"],
+  "permissions": ["storage", "tabs", "chrome://favicon/", "unlimitedStorage"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';"
 }

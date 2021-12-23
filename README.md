@@ -154,6 +154,14 @@ cardano.onAccountChange((addresses : [BaseAddress]) => void)
 cardano.onNetworkChange((network : number) => void)
 ```
 
+##### cardano.onDisconnect(origin)
+
+```
+cardano.onDisconnect(() => void)
+```
+
+Fired when the user removes the present website from the whitelist
+
 ### Develop
 
 The `project_id` for API requests can be created under [blockfrost.io](https://blockfrost.io/).

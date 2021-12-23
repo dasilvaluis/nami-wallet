@@ -1,5 +1,6 @@
-import { EVENT, METHOD, SENDER, TARGET } from '../../config/config';
+import { EVENT, METHOD } from '../../config/config';
 import { Messaging } from '../messaging';
+import { eventListenerManager } from '../eventsManager';
 
 export const getBalance = async () => {
   const result = await Messaging.sendToContent({ method: METHOD.getBalance });
@@ -76,50 +77,11 @@ export const submitTx = async (tx) => {
   return result.data;
 };
 
-export const onAccountChange = (callback) => {
-  function responseHandler(e) {
-    const response = e.data;
-    if (
-      typeof response !== 'object' ||
-      response === null ||
-      !response.target ||
-      response.target !== TARGET ||
-      !response.event ||
-      response.event !== EVENT.accountChange ||
-      !response.sender ||
-      response.sender !== SENDER.extension
-    )
-      return;
-    callback(response.data);
-  }
-  window.addEventListener('message', responseHandler);
-  return {
-    remove: () => {
-      window.removeEventListener('message', responseHandler);
-    },
-  };
-};
+export const onDisconnect = (callback) => 
+  eventListenerManager(callback, EVENT.disconnect);
 
-export const onNetworkChange = (callback) => {
-  function responseHandler(e) {
-    const response = e.data;
-    if (
-      typeof response !== 'object' ||
-      response === null ||
-      !response.target ||
-      response.target !== TARGET ||
-      !response.event ||
-      response.event !== EVENT.networkChange ||
-      !response.sender ||
-      response.sender !== SENDER.extension
-    )
-      return;
-    callback(response.data);
-  }
-  window.addEventListener('message', responseHandler);
-  return {
-    remove: () => {
-      window.removeEventListener('message', responseHandler);
-    },
-  };
-};
+export const onAccountChange = (callback) => 
+  eventListenerManager(callback, EVENT.accountChange);
+
+export const onNetworkChange = (callback) => 
+  eventListenerManager(callback, EVENT.networkChange);

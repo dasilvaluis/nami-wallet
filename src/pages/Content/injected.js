@@ -9,6 +9,7 @@ import {
   isEnabled,
   onAccountChange,
   onNetworkChange,
+  onDisconnect,
   signData,
   signTx,
   submitTx,
@@ -34,6 +35,7 @@ window.cardano = {
   getNetworkId: () => getNetworkId(),
   onAccountChange: (callback) => onAccountChange(callback),
   onNetworkChange: (callback) => onNetworkChange(callback),
+  onDisconnect: (callback) => onDisconnect(callback),
 };
 
 // const logDeprecated = () => {

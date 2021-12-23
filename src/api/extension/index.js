@@ -26,8 +26,6 @@ import {
   networkNameToId,
   utxoFromJson,
   assetsToValue,
-  valueToAssets,
-  sumUtxos,
   txToLedger,
   txToTrezor,
   linkToSrc,
@@ -38,6 +36,8 @@ import Ada, { HARDENED } from '@cardano-foundation/ledgerjs-hw-app-cardano';
 import TrezorConnect from '../../../temporary_modules/trezor-connect';
 import AssetFingerprint from '@emurgo/cip14-js';
 import Web3Utils from 'web3-utils';
+import { eventListenerManager } from '../eventsManager';
+import { getCurrentUrl, reduceUrlToHost } from '../helpers';
 
 export const getStorage = (key) =>
   new Promise((res, rej) =>
@@ -104,7 +104,9 @@ export const setWhitelisted = async (origin) => {
 export const removeWhitelisted = async (origin) => {
   const whitelisted = await getWhitelisted();
   const index = whitelisted.indexOf(origin);
-  whitelisted.splice(index, 1);
+  //whitelisted.splice(index, 1);
+  maybeEmitDisconnect(origin);
+
   return await setStorage({ [STORAGE.whitelisted]: whitelisted });
 };
 
@@ -446,8 +448,9 @@ export const setNetwork = async (network) => {
     node = NODE.testnet;
   }
   if (network.node) node = network.node;
-  if (currentNetwork && currentNetwork.id !== id)
+  if (currentNetwork && currentNetwork.id !== id) {
     emitNetworkChange(networkNameToId(id));
+  }
   await setStorage({
     [STORAGE.network]: { id, node },
   });
@@ -932,6 +935,25 @@ export const submitTx = async (tx) => {
   return result;
 };
 
+const maybeEmitDisconnect = async (origin) => {
+  const originHost = reduceUrlToHost(origin);
+  const currentHost = reduceUrlToHost(await getCurrentUrl());
+
+  if (originHost === currentHost) {
+    //to webpage
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) =>
+        chrome.tabs.sendMessage(tab.id, {
+          data: originHost,
+          target: TARGET,
+          sender: SENDER.extension,
+          event: EVENT.disconnect,
+        })
+      );
+    });
+  }
+}
+
 const emitNetworkChange = async (networkId) => {
   //to webpage
   chrome.tabs.query({}, (tabs) => {
@@ -969,29 +991,8 @@ const emitAccountChange = async (addresses) => {
   });
 };
 
-export const onAccountChange = (callback) => {
-  function responseHandler(e) {
-    const response = e.data;
-    if (
-      typeof response !== 'object' ||
-      response === null ||
-      !response.target ||
-      response.target !== TARGET ||
-      !response.event ||
-      response.event !== EVENT.accountChange ||
-      !response.sender ||
-      response.sender !== SENDER.extension
-    )
-      return;
-    callback(response.data);
-  }
-  window.addEventListener('message', responseHandler);
-  return {
-    remove: () => {
-      window.removeEventListener('message', responseHandler);
-    },
-  };
-};
+export const onAccountChange = (callback) => 
+  eventListenerManager(callback, EVENT.accountChange);
 
 export const switchAccount = async (accountIndex) => {
   await setStorage({ [STORAGE.currentAccount]: accountIndex });
